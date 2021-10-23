@@ -4,16 +4,16 @@ import ru.sendgoods.javamultithreading.level7.lecture15.custom_archiver.zip_arch
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 
 public class Archiver {
     public static void main(String[] args) throws Exception {
 
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
-            System.out.print("Please, enter full path to the archive: ");
-            ZipFileManager zipFileManager = new ZipFileManager(Paths.get(reader.readLine()));
-            System.out.print("Please, enter full path to the file: ");
-            zipFileManager.createZip(Paths.get(reader.readLine()));
+            System.out.print("Пожалуйста, введите полный путь к создаваемому файлу архива: ");
+            ZipFileManager zipFileManager = new ZipFileManager(Path.of(reader.readLine()));
+            System.out.print("Пожалуйста, введите полный путь к архивируемому файлу: ");
+            zipFileManager.createZip(Path.of(reader.readLine()));
         }
 
         new ExitCommand().execute();
