@@ -8,7 +8,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -40,6 +43,39 @@ public class ZipFileManager {
             } else {
                 throw new PathIsNotFoundException();
             }
+        }
+    }
+
+    public void removeFile(Path path) throws Exception {
+        removeFiles(Collections.singletonList(path));
+    }
+
+    public void removeFiles(List<Path> pathList) throws Exception {
+
+        if (!Files.isRegularFile(zipFile)) {
+            throw new WrongZipFileException();
+        }
+
+        Path tempZip = Files.createTempFile(null, null);
+
+        try (ZipInputStream zipInputStream = new ZipInputStream(Files.newInputStream(zipFile));
+             ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(tempZip))) {
+
+            ZipEntry zipEntry = zipInputStream.getNextEntry();
+
+            while (zipEntry != null) {
+                String fileName = zipEntry.getName();
+                if (pathList.contains(Paths.get(fileName))) {
+                    ConsoleHelper.writeMessage(String.format("Файл %s удален из архива", fileName));
+                } else {
+                    zipOutputStream.putNextEntry(new ZipEntry(fileName));
+                    copyData(zipInputStream, zipOutputStream);
+                    zipInputStream.closeEntry();
+                    zipOutputStream.closeEntry();
+                }
+                zipEntry = zipInputStream.getNextEntry();
+            }
+            Files.move(tempZip, zipFile, StandardCopyOption.REPLACE_EXISTING);
         }
     }
 

@@ -2,7 +2,7 @@ package ru.sendgoods.javamultithreading.level7.lecture15.custom_archiver.zip_arc
 
 import ru.sendgoods.javamultithreading.level7.lecture15.custom_archiver.zip_archiver_on_java_2021.ConsoleHelper;
 import ru.sendgoods.javamultithreading.level7.lecture15.custom_archiver.zip_archiver_on_java_2021.ZipFileManager;
-import ru.sendgoods.javamultithreading.level7.lecture15.custom_archiver.zip_archiver_on_java_2021.exception.WrongZipFileException;
+import ru.sendgoods.javamultithreading.level7.lecture15.custom_archiver.zip_archiver_on_java_2021.exception.PathIsNotFoundException;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -16,12 +16,12 @@ public class ZipExtractCommand extends ZipCommand {
             ZipFileManager zipFileManager = getZipFileManager();
 
             ConsoleHelper.writeMessage("Введите полное имя директории для извлечения содержимого архива:");
-            Path outputFolder = Paths.get(ConsoleHelper.readString());
-            zipFileManager.extractAll(outputFolder);
+            Path destinationPath = Paths.get(ConsoleHelper.readString());
+            zipFileManager.extractAll(destinationPath);
 
             ConsoleHelper.writeMessage("Архив распакован.");
 
-        } catch (WrongZipFileException e) {
+        } catch (PathIsNotFoundException e) {
             ConsoleHelper.writeMessage("Вы неверно указали имя директории.");
         }
     }
