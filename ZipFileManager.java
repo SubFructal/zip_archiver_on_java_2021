@@ -43,6 +43,36 @@ public class ZipFileManager {
         }
     }
 
+    public void extractAll(Path outputFolder) throws Exception {
+
+        if (!Files.isRegularFile(zipFile)) {
+            throw new WrongZipFileException();
+        }
+
+        if (Files.notExists(outputFolder)) {
+            Files.createDirectories(outputFolder);
+        }
+
+        try (ZipInputStream zipInputStream = new ZipInputStream(Files.newInputStream(zipFile))) {
+            ZipEntry zipEntry = zipInputStream.getNextEntry();
+
+            while (zipEntry != null) {
+                String fileName = zipEntry.getName();
+                Path fullFileName = outputFolder.resolve(fileName);
+
+                if (Files.notExists(fullFileName.getParent())) {
+                    Files.createDirectories(fullFileName.getParent());
+                }
+
+                try (OutputStream outputStream = Files.newOutputStream(fullFileName)) {
+                    copyData(zipInputStream, outputStream);
+                }
+
+                zipEntry = zipInputStream.getNextEntry();
+            }
+        }
+    }
+
     public List<FileProperties> getFilesList() throws Exception {
         if (!Files.isRegularFile(zipFile)) {
             throw new WrongZipFileException();
@@ -51,8 +81,8 @@ public class ZipFileManager {
         List<FileProperties> filesPropertiesList = new ArrayList<>();
 
         try (ZipInputStream zipInputStream = new ZipInputStream(Files.newInputStream(zipFile))) {
-
             ZipEntry currentZipEntry = zipInputStream.getNextEntry();
+
             while (currentZipEntry != null) {
                 // Поля "размер" и "сжатый размер" не известны, пока элемент не будет прочитан
                 // Давайте вычитаем его в какой-то выходной поток
@@ -61,7 +91,6 @@ public class ZipFileManager {
 
                 FileProperties currentFile = new FileProperties(currentZipEntry.getName(), currentZipEntry.getSize(),
                         currentZipEntry.getCompressedSize(), currentZipEntry.getMethod());
-
                 filesPropertiesList.add(currentFile);
                 currentZipEntry = zipInputStream.getNextEntry();
             }
@@ -84,8 +113,8 @@ public class ZipFileManager {
 
     private void copyData(InputStream in, OutputStream out) throws Exception {
         byte[] buffer = new byte[(int) Math.pow(2, 10)]; //1Kb
-        while (in.available() > 0) {
-            int countOfReadingBytes = in.read(buffer);
+        int countOfReadingBytes;
+        while ((countOfReadingBytes = in.read(buffer)) > 0) {
             out.write(buffer, 0, countOfReadingBytes);
         }
     }
