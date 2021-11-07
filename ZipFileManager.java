@@ -79,6 +79,55 @@ public class ZipFileManager {
         }
     }
 
+    public void addFile(Path absolutePath) throws Exception {
+        addFiles(Collections.singletonList(absolutePath));
+    }
+
+    public void addFiles(List<Path> absolutePathList) throws Exception {
+
+        if (!Files.isRegularFile(zipFile)) {
+            throw new WrongZipFileException();
+        }
+
+        Path tempZipFile = Files.createTempFile(null, null);
+        List<Path> archiveFiles = new ArrayList<>();
+
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(tempZipFile))) {
+            try (ZipInputStream zipInputStream = new ZipInputStream(Files.newInputStream(zipFile))) {
+
+                ZipEntry zipEntry = zipInputStream.getNextEntry();
+
+                while (zipEntry != null) {
+                    String fileName = zipEntry.getName();
+                    archiveFiles.add(Paths.get(fileName).getFileName());
+
+                    zipOutputStream.putNextEntry(new ZipEntry(fileName));
+                    copyData(zipInputStream, zipOutputStream);
+
+                    zipInputStream.closeEntry();
+                    zipOutputStream.closeEntry();
+
+                    zipEntry = zipInputStream.getNextEntry();
+                }
+            }
+
+            for (Path currentPath : absolutePathList) {
+                if (Files.notExists(currentPath) || !Files.isRegularFile(currentPath)) {
+                    throw new PathIsNotFoundException();
+                }
+
+                if (!archiveFiles.contains(currentPath.getFileName())) {
+                    addNewZipEntry(zipOutputStream, currentPath.getParent(), currentPath.getFileName());
+                    ConsoleHelper.writeMessage(String.format("Файл %s добавлен в архив", currentPath.getFileName().toString()));
+                } else {
+                    ConsoleHelper.writeMessage(String.format("Файл %s уже существует в архиве", currentPath.getFileName().toString()));
+                }
+            }
+        }
+
+        Files.move(tempZipFile, zipFile, StandardCopyOption.REPLACE_EXISTING);
+    }
+
     public void extractAll(Path outputFolder) throws Exception {
 
         if (!Files.isRegularFile(zipFile)) {
